@@ -62,9 +62,6 @@ static void oom(void) {
 static void* xmalloc(size_t size) {
     void *p;
 
-    if (size == 0)
-        return NULL;
-
     if (!(p = malloc(size)))
         oom();
 
