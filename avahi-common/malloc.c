@@ -58,50 +58,18 @@ static void oom(void) {
     abort();
 }
 
-/* Default implementation for avahi_malloc() */
-static void* xmalloc(size_t size) {
-    void *p;
-
-    if (!(p = malloc(size)))
-        oom();
-
-    return p;
-}
-
-/* Default implementation for avahi_realloc() */
-static void *xrealloc(void *p, size_t size) {
-
-    if (size == 0) {
-        free(p);
-        return NULL;
-    }
-
-    if (!(p = realloc(p, size)))
-        oom();
-
-    return p;
-}
-
-/* Default implementation for avahi_calloc() */
-static void *xcalloc(size_t nmemb, size_t size) {
-    void *p;
-
-    if (size == 0 || nmemb == 0)
-        return NULL;
-
-    if (!(p = calloc(nmemb, size)))
-        oom();
-
-    return p;
-}
 
 void *avahi_malloc(size_t size) {
+    void *p;
 
     if (size <= 0)
         return NULL;
 
-    if (!allocator)
-        return xmalloc(size);
+    if (!allocator) {
+        if (!(p = malloc(size)))
+    	    oom();
+        return p;
+    }
 
     assert(allocator->malloc);
     return allocator->malloc(size);
@@ -113,8 +81,11 @@ void *avahi_malloc0(size_t size) {
     if (size <= 0)
         return NULL;
 
-    if (!allocator)
-        return xcalloc(1, size);
+    if (!allocator) {
+        if (!(p = calloc(nmemb, size)))
+            oom();
+        return p;
+    }
 
     if (allocator->calloc)
         return allocator->calloc(1, size);
@@ -147,8 +118,11 @@ void *avahi_realloc(void *p, size_t size) {
         return NULL;
     }
 
-    if (!allocator)
-        return xrealloc(p, size);
+    if (!allocator) {
+        if (!(p = realloc(p, size)))
+            oom();
+        return p;
+    }
 
     assert(allocator->realloc);
     return allocator->realloc(p, size);
